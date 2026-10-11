@@ -1,0 +1,15 @@
+# Dawn Patrol web demo — static site served by nginx at the repo root.
+# Live mic needs a secure context; the APK is the primary product.
+services:
+  dawnpatrol-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dawnpatrol-web
+    container_name: dawnpatrol-web
+    networks:
+      - dokploy-network
+    restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true
