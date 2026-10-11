@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>YAMNet browser spike</title></head>
+<body>
+<h3>YAMNet in-browser spike — open devtools console</h3>
+<script src="vendor/ort.min.js"></script>
+<script>
+(async () => {
+  try {
+    const t0 = performance.now();
+    ort.env.wasm.numThreads = 1; // plain http: no COOP/COEP, no SAB
+    // no wasmPaths override: ort resolves the .mjs/.wasm relative to ort.min.js's own dir (vendor/)
+    const session = await ort.InferenceSession.create('model/yamnet.onnx', { executionProviders: ['wasm'] });
+    console.log('SPIKE model loaded in', (performance.now() - t0).toFixed(0), 'ms');
+    console.log('SPIKE crossOriginIsolated:', self.crossOriginIsolated);
+
+    // deterministic pseudo-random chirp synth (same idea as the python probe)
+    const SR = 16000, N = SR * 3;
+    const out = new Float32Array(N);
+    let seed = 42;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    let pos = 0;
+    while (pos < N - 4000) {
+      const len = Math.floor(SR * (0.05 + rnd() * 0.07));
+      const f0 = 2800 + rnd() * 1400, f1 = 4500 + rnd() * 2000;
+      let phase = 0;
+      const trillF = 60 + rnd() * 50;
+      for (let i = 0; i < len; i++) {
+        const t = i / SR;
+        const f = f0 + (f1 - f0) * (i / len);
+        phase += 2 * Math.PI * f / SR;
+        const trill = 0.5 * (1 + Math.sin(2 * Math.PI * trillF * t));
+        out[pos + i] += Math.sin(phase) * trill * 0.7;
+      }
+      pos += len + Math.floor(SR * (0.08 + rnd() * 0.17));
+    }
+    let peak = 0;
+    for (let i = 0; i < N; i++) peak = Math.max(peak, Math.abs(out[i]));
+    for (let i = 0; i < N; i++) out[i] /= peak / 0.9;
+
+    const t1 = performance.now();
+    const feeds = { waveform: new ort.Tensor('float32', out, [N]) };
+    const res = await session.run(feeds);
+    const scores = res[session.outputNames[0]];
+    console.log('SPIKE inference ok. dims', scores.dims, 'in', (performance.now() - t1).toFixed(0), 'ms');
+
+    const data = scores.data, frames = scores.dims[0], nCls = scores.dims[1];
+    const mean = new Float64Array(nCls);
+    for (let f = 0; f < frames; f++)
+      for (let c = 0; c < nCls; c++) mean[c] += data[f * nCls + c] / frames;
+    const idx = [...mean.keys()].sort((a, b) => mean[b] - mean[a]).slice(0, 10);
+
+    const csv = await (await fetch('model/yamnet_class_map.csv')).text();
+    const names = {};
+    for (const l of csv.split('\n').slice(1)) {
+      if (!l) continue;
+      const p1 = l.indexOf(','), p2 = l.indexOf(',', p1 + 1);
+      names[+l.slice(0, p1)] = l.slice(p2 + 1).replace(/^"|"$/g, '');
+    }
+    console.log('SPIKE TOP CLASSES:');
+    for (const i of idx) console.log('  ', mean[i].toFixed(3), names[i]);
+    console.log('SPIKE ALL CHECKS PASSED');
+  } catch (e) {
+    console.error('SPIKE FAILED:', e && (e.stack || e.message || e));
+  }
+})();
+</script>
+</body>
+</html>
