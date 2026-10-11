@@ -1,0 +1,67 @@
+[
+ {
+  "index": 94,
+  "name": "Chicken, rooster",
+  "weight": 1.0
+ },
+ {
+  "index": 96,
+  "name": "Crowing, cock-a-doodle-doo",
+  "weight": 1.0
+ },
+ {
+  "index": 97,
+  "name": "Turkey",
+  "weight": 1.0
+ },
+ {
+  "index": 99,
+  "name": "Duck",
+  "weight": 1.0
+ },
+ {
+  "index": 101,
+  "name": "Goose",
+  "weight": 1.0
+ },
+ {
+  "index": 106,
+  "name": "Bird",
+  "weight": 1.0
+ },
+ {
+  "index": 107,
+  "name": "Bird vocalization, bird call, bird song",
+  "weight": 1.0
+ },
+ {
+  "index": 108,
+  "name": "Chirp, tweet",
+  "weight": 1.0
+ },
+ {
+  "index": 109,
+  "name": "Squawk",
+  "weight": 1.0
+ },
+ {
+  "index": 110,
+  "name": "Pigeon, dove",
+  "weight": 1.0
+ },
+ {
+  "index": 112,
+  "name": "Crow",
+  "weight": 1.0
+ },
+ {
+  "index": 114,
+  "name": "Owl",
+  "weight": 1.0
+ },
+ {
+  "index": 116,
+  "name": "Bird flight, flapping wings",
+  "weight": 1.0
+ }
+]

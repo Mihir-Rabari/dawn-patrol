@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Dawn Patrol — the alarm that only stops for real birdsong</title>
+  <meta name="description" content="An alarm clock that refuses to snooze: it stops only when it hears real birds, verified on-device by a 4 MB open-weight model. No server, no API, works in airplane mode.">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-view="setup">
+  <header>
+    <div class="brand">
+      <img src="icon.svg" alt="" width="34" height="34">
+      <div>
+        <h1>Dawn Patrol</h1>
+        <p class="tagline">the alarm that only stops for real birdsong</p>
+      </div>
+    </div>
+    <span id="offline-badge" class="badge offline" hidden>✈️ offline — still working</span>
+    <span class="badge ondevice">100% on-device · open-weight YAMNet · Apache-2.0</span>
+  </header>
+
+  <main>
+    <!-- SETUP -->
+    <section data-view="setup" class="card">
+      <h2>Arm the patrol</h2>
+      <label class="field">
+        <span>Wake me at</span>
+        <input type="time" id="alarm-time" required>
+      </label>
+      <label class="field">
+        <span>How strict is the birdsong proof?</span>
+        <select id="sensitivity">
+          <option value="relaxed">Relaxed — 4s of any bird evidence</option>
+          <option value="normal" selected>Normal — 6s of bird calls (default)</option>
+          <option value="strict">Strict — 8s of strong calls</option>
+        </select>
+      </label>
+      <div class="row">
+        <button id="arm-btn" class="primary">Arm alarm</button>
+        <button id="test-btn">Test the flow now</button>
+      </div>
+      <p class="explain">
+        When it rings, the only snooze button is <em>outside</em>: open the app,
+        let it listen, and YAMNet — a 4 MB open-weight audio model running
+        entirely in this page — decides whether the birds vouch for you.
+      </p>
+      <p class="explain small">Keep the tab open while armed (the app holds a
+        screen wake-lock). Load once — airplane mode after that is fine.</p>
+    </section>
+
+    <!-- ARMED -->
+    <section data-view="armed" class="card" hidden>
+      <h2>Patrol armed for <span id="armed-for"></span></h2>
+      <p class="countdown" id="countdown">—</p>
+      <div class="row">
+        <button id="disarm-btn">Disarm</button>
+      </div>
+      <p class="explain small">Screen stays awake. Close nothing. The birds are
+        already up.</p>
+    </section>
+
+    <!-- RINGING -->
+    <section data-view="ringing" class="card ringing" hidden>
+      <h2>🌅 Time to touch grass</h2>
+      <p class="explain">The alarm will not stop until Dawn Patrol hears real
+        birds. Take your phone outside and start listening.</p>
+      <div class="row">
+        <button id="source-mic" class="primary">I'm outside — listen live</button>
+      </div>
+      <div class="row alt">
+        <button id="source-sample">No mic? Try the bundled dawn chorus</button>
+        <label class="btn-file">or feed a file<input type="file" id="file-input" accept="audio/*" hidden></label>
+      </div>
+    </section>
+
+    <!-- LISTENING -->
+    <section data-view="listening" class="card" hidden>
+      <h2>Listening… <span id="listen-mode" class="pill"></span></h2>
+      <div class="meter-wrap">
+        <svg viewBox="0 0 120 120" class="meter" aria-hidden="true">
+          <circle cx="60" cy="60" r="46" class="ring-bg"/>
+          <circle cx="60" cy="60" r="46" id="ring-fill" class="ring-fill"/>
+        </svg>
+        <div class="meter-text">
+          <strong id="bird-seconds">0.0</strong>
+          <span>/ <span id="req-seconds">6</span>s of birdsong</span>
+        </div>
+      </div>
+      <div class="level"><i id="level-bar"></i></div>
+      <p class="hearing" id="hearing">…</p>
+      <p class="explain small">Now hearing: the model's top classes, live.
+        <span id="listen-elapsed">0:00</span> elapsed.</p>
+      <p id="frustration-hint" class="explain small" hidden>
+        Nothing yet? Traffic drowns birdsong — move away from roads, or switch
+        to Relaxed sensitivity. The alarm keeps its promise: no snooze button
+        exists.</p>
+      <div id="mic-fallback" class="row alt" hidden>
+        <button id="source-sample-2">Play the bundled dawn chorus instead</button>
+        <label class="btn-file">or feed a file<input type="file" id="file-input-2" accept="audio/*" hidden></label>
+      </div>
+      <div class="row">
+        <button id="concede-btn" class="danger">Concede (logged honestly)</button>
+        <button id="back-btn">Back</button>
+      </div>
+    </section>
+
+    <!-- VICTORY -->
+    <section data-view="victory" class="card victory" hidden>
+      <h2>🌄 Dawn verified</h2>
+      <p class="explain" id="victory-line"></p>
+      <div id="census" class="census"></div>
+      <div class="row">
+        <button id="again-btn" class="primary">Arm again</button>
+      </div>
+    </section>
+
+    <p id="status" class="status" role="status"></p>
+
+    <!-- JOURNAL -->
+    <section class="card journal">
+      <h2>Field journal</h2>
+      <p class="streak-line">Grass streak: <strong id="streak">0</strong> ·
+        mornings logged: <span id="journal-count">0</span></p>
+      <div id="journal-list"></div>
+      <div class="row alt">
+        <button id="export-btn">Export JSON</button>
+        <button id="clear-btn" class="danger">Clear</button>
+      </div>
+    </section>
+
+    <footer>
+      <p class="small">All inference runs in your browser via
+        <a href="https://github.com/tensorflow/models/tree/master/research/audioset/yamnet" rel="noopener">YAMNet</a>
+        (Apache-2.0, Google Research) on
+        <a href="https://onnxruntime.ai" rel="noopener">onnxruntime-web</a>.
+        Audio never leaves this device. Sample audio: CC BY-SA 4.0 —
+        <a href="samples/CREDITS.md" rel="noopener">credits</a>.</p>
+      <p class="small"><a href="https://github.com/Mihir-Rabari/dawn-patrol" rel="noopener">Source on GitHub</a></p>
+    </footer>
+  </main>
+
+  <script src="vendor/ort.min.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
