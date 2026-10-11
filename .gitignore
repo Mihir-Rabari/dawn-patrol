@@ -1,0 +1,16 @@
+# scratch / build
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+tools/venv/
+scratch/
+*.log
+.DS_Store
+
+# do not commit big scratch audio; bundled demo samples live in samples/ explicitly
+*.wav
+!samples/*.wav
+*.webm
+*.mp4
