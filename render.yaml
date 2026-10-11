@@ -1,0 +1,22 @@
+# Render static-site config for the Dawn Patrol web demo.
+# Option 3 of the deploy plan: New -> Web Service -> connect Mihir-Rabari/dawn-patrol
+# -> Render reads this file -> static site with a permanent https URL (mic works).
+services:
+  - type: web
+    name: dawn-patrol
+    runtime: static
+    staticPublishPath: ./
+    headers:
+      - path: /model/*
+        name: Cache-Control
+        value: public, max-age=2592000, immutable
+      - path: /vendor/*
+        name: Cache-Control
+        value: public, max-age=2592000, immutable
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /
+        destination: /index.html
